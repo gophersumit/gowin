@@ -1,0 +1,19 @@
+project_name: gowin
+builds:
+  - env: [CGO_ENABLED=0]
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+nfpms:
+- maintainer: Sumit Agrawal <gohersumit@gmail.com>
+  description: gowin -CLI application for coWIN.
+  homepage: https://github.com/gophersumit/gowin
+  license: Apache License, Version 2.0
+  formats:
+  - deb
+  - rpm
+  - apk
