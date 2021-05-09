@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gophersumit/gowin/pkg/CowinPublicV2"
 	"github.com/spf13/cobra"
@@ -33,6 +34,12 @@ var findCmd = &cobra.Command{
 	Long:  `find will help you see hopsitals with vaccinate availabity for next 30 days.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
+		pincode, err := cmd.Flags().GetInt("pincode")
+		if err != nil || pincode <= 0 {
+			log.Fatalf("Error reading pincode")
+		}
+		strPin := strconv.Itoa(pincode)
+
 		cowinClient := CowinPublicV2.Client{
 			Server:         "https://cdn-api.co-vin.in/api/",
 			Client:         &http.Client{},
@@ -40,7 +47,7 @@ var findCmd = &cobra.Command{
 		}
 
 		param := &CowinPublicV2.CalendarByPinParams{
-			Pincode:        "411027",
+			Pincode:        strPin,
 			Date:           "09-05-2021",
 			AcceptLanguage: nil,
 		}
@@ -62,6 +69,9 @@ var findCmd = &cobra.Command{
 }
 
 func init() {
+	var pincode int
+	findCmd.Flags().IntVarP(&pincode, "pincode", "p", 411014, "Pincode to search for")
+	findCmd.MarkFlagRequired("pincode")
 	rootCmd.AddCommand(findCmd)
 
 	// Here you will define your flags and configuration settings.

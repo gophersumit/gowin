@@ -367,7 +367,6 @@ func (c *Client) CalendarByDistrict(ctx context.Context, params *CalendarByDistr
 func (c *Client) CalendarByPin(ctx context.Context, params *CalendarByPinParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCalendarByPinRequest(c.Server, params)
 
-	fmt.Println(req.URL)
 	if err != nil {
 		return nil, err
 	}
