@@ -17,8 +17,8 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -40,7 +40,7 @@ var findCmd = &cobra.Command{
 		}
 
 		param := &CowinPublicV2.CalendarByPinParams{
-			Pincode:        "411014",
+			Pincode:        "411027",
 			Date:           "09-05-2021",
 			AcceptLanguage: nil,
 		}
@@ -49,17 +49,15 @@ var findCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("Error")
 		}
-
 		defer response.Body.Close()
+		centers := CowinCenters{}
+		json.NewDecoder(response.Body).Decode(&centers)
 
-		data, err := ioutil.ReadAll(response.Body)
-
-		if err != nil {
-			log.Fatalf("Error decoding response")
+		for _, v := range centers.Centers {
+			for _, s := range v.Sessions {
+				fmt.Printf("%30s\t%10s\t%10s\t%d\n", v.Name, s.Vaccine, s.Date, s.AvailableCapacity)
+			}
 		}
-
-		fmt.Printf("%s", string(data))
-
 	},
 }
 
