@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/deepmap/oapi-codegen v1.6.1 // indirect
+	github.com/fatih/color v1.10.0 // indirect
 	github.com/getkin/kin-openapi v0.53.0 // indirect
 	github.com/go-chi/chi v4.0.2+incompatible // indirect
 	github.com/labstack/echo/v4 v4.2.2 // indirect

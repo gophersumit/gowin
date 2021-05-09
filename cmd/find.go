@@ -18,11 +18,11 @@ package cmd
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 
+	"github.com/fatih/color"
 	"github.com/gophersumit/gowin/pkg/CowinPublicV2"
 	"github.com/spf13/cobra"
 )
@@ -35,11 +35,10 @@ var findCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		pincode, err := cmd.Flags().GetInt("pincode")
-		if err != nil || pincode <= 0 {
+		if err != nil {
 			log.Fatalf("Error reading pincode")
 		}
 		strPin := strconv.Itoa(pincode)
-
 		cowinClient := CowinPublicV2.Client{
 			Server:         "https://cdn-api.co-vin.in/api/",
 			Client:         &http.Client{},
@@ -59,19 +58,15 @@ var findCmd = &cobra.Command{
 		defer response.Body.Close()
 		centers := CowinCenters{}
 		json.NewDecoder(response.Body).Decode(&centers)
-
-		for _, v := range centers.Centers {
-			for _, s := range v.Sessions {
-				fmt.Printf("%30s\t%10s\t%10s\t%d\n", v.Name, s.Vaccine, s.Date, s.AvailableCapacity)
-			}
-		}
+		printCenters(centers)
 	},
 }
 
 func init() {
 	var pincode int
-	findCmd.Flags().IntVarP(&pincode, "pincode", "p", 411014, "Pincode to search for")
+	findCmd.Flags().IntVarP(&pincode, "pincode", "p", 0, "Pincode to search for")
 	findCmd.MarkFlagRequired("pincode")
+
 	rootCmd.AddCommand(findCmd)
 
 	// Here you will define your flags and configuration settings.
@@ -83,4 +78,20 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// findCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+func printCenters(centers CowinCenters) {
+	green := color.New(color.FgGreen).Add(color.Underline).Add(color.Bold)
+	red := color.New(color.FgRed).Add(color.Underline).Add(color.Bold)
+	header := color.New(color.BgBlack).Add(color.FgWhite).Add(color.Bold)
+	header.Printf("%30s|\t%10s|\t%10s|\t%s|\n", "Center Name", "Vaccine", "Date", "Capacity")
+	for _, v := range centers.Centers {
+		for _, s := range v.Sessions {
+			if s.AvailableCapacity > 0 {
+				green.Printf("%30s|\t%10s|\t%10s|\t%8d|\n", v.Name, s.Vaccine, s.Date, s.AvailableCapacity)
+			} else {
+				red.Printf("%30s|\t%10s|\t%10s|\t%8d|\n", v.Name, s.Vaccine, s.Date, s.AvailableCapacity)
+			}
+		}
+	}
 }
