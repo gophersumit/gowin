@@ -21,6 +21,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"sync"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/gophersumit/gowin/pkg/CowinPublicV2"
@@ -38,27 +40,46 @@ var findCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("Error reading pincode")
 		}
+
+		weeks := 12
+		dates := make([]string, 12)
+		for i := 0; i < weeks; i++ {
+			dates[i] = time.Now().AddDate(0, 0, 7*i).Format("02-01-2006")
+		}
+
 		strPin := strconv.Itoa(pincode)
 		cowinClient := CowinPublicV2.Client{
 			Server:         "https://cdn-api.co-vin.in/api/",
 			Client:         &http.Client{},
 			RequestEditors: []CowinPublicV2.RequestEditorFn{},
 		}
+		wg := sync.WaitGroup{}
+		header := color.New(color.BgBlack).Add(color.FgWhite).Add(color.Bold)
+		header.Printf("%30s|\t%10s|\t%10s|\t%10s|\t%s|\n", "Center Name", "City", "Vaccine", "Date", "Capacity")
+		wg.Add(len(dates))
+		for _, date := range dates {
+			go func(d string) {
 
-		param := &CowinPublicV2.CalendarByPinParams{
-			Pincode:        strPin,
-			Date:           "09-05-2021",
-			AcceptLanguage: nil,
-		}
-		response, err := cowinClient.CalendarByPin(context.Background(), param, cowinClient.RequestEditors...)
+				param := &CowinPublicV2.CalendarByPinParams{
+					Pincode:        strPin,
+					Date:           d,
+					AcceptLanguage: nil,
+				}
+				response, err := cowinClient.CalendarByPin(context.Background(), param, cowinClient.RequestEditors...)
 
-		if err != nil {
-			log.Fatalf("Error")
+				if err != nil {
+					log.Fatalf("Error")
+				}
+				defer response.Body.Close()
+				centers := CowinCenters{}
+				json.NewDecoder(response.Body).Decode(&centers)
+				printCenters(centers)
+				wg.Done()
+
+			}(date)
 		}
-		defer response.Body.Close()
-		centers := CowinCenters{}
-		json.NewDecoder(response.Body).Decode(&centers)
-		printCenters(centers)
+
+		wg.Wait()
 	},
 }
 
@@ -81,16 +102,15 @@ func init() {
 }
 
 func printCenters(centers CowinCenters) {
-	green := color.New(color.FgGreen).Add(color.Underline).Add(color.Bold)
-	red := color.New(color.FgRed).Add(color.Underline).Add(color.Bold)
-	header := color.New(color.BgBlack).Add(color.FgWhite).Add(color.Bold)
-	header.Printf("%30s|\t%10s|\t%10s|\t%s|\n", "Center Name", "Vaccine", "Date", "Capacity")
+	green := color.New(color.FgGreen).Add(color.Underline).Add(color.BgBlack).Add(color.Bold)
+	red := color.New(color.FgRed).Add(color.Underline).Add(color.BgBlack).Add(color.Bold)
+
 	for _, v := range centers.Centers {
 		for _, s := range v.Sessions {
 			if s.AvailableCapacity > 0 {
-				green.Printf("%30s|\t%10s|\t%10s|\t%8d|\n", v.Name, s.Vaccine, s.Date, s.AvailableCapacity)
+				green.Printf("%30s|\t%10s|\t%10s|\t%10s|\t%8d|\n", v.Name, v.DistrictName, s.Vaccine, s.Date, s.AvailableCapacity)
 			} else {
-				red.Printf("%30s|\t%10s|\t%10s|\t%8d|\n", v.Name, s.Vaccine, s.Date, s.AvailableCapacity)
+				red.Printf("%30s|\t%10s|\t%10s|\t%10s|\t%8d|\n", v.Name, v.DistrictName, s.Vaccine, s.Date, s.AvailableCapacity)
 			}
 		}
 	}
