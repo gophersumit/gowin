@@ -16,18 +16,50 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
 
+	"github.com/gophersumit/gowin/pkg/CowinPublicV2"
 	"github.com/spf13/cobra"
 )
 
 // findCmd represents the find command
 var findCmd = &cobra.Command{
 	Use:   "find",
-	Short: "find available hospitals by pincode",
+	Short: "find available hospitals by pincode using cowin",
 	Long:  `find will help you see hopsitals with vaccinate availabity for next 30 days.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("find called")
+
+		cowinClient := CowinPublicV2.Client{
+			Server:         "https://cdn-api.co-vin.in/api/",
+			Client:         &http.Client{},
+			RequestEditors: []CowinPublicV2.RequestEditorFn{},
+		}
+
+		param := &CowinPublicV2.CalendarByPinParams{
+			Pincode:        "411014",
+			Date:           "09-05-2021",
+			AcceptLanguage: nil,
+		}
+		response, err := cowinClient.CalendarByPin(context.Background(), param, cowinClient.RequestEditors...)
+
+		if err != nil {
+			log.Fatalf("Error")
+		}
+
+		defer response.Body.Close()
+
+		data, err := ioutil.ReadAll(response.Body)
+
+		if err != nil {
+			log.Fatalf("Error decoding response")
+		}
+
+		fmt.Printf("%s", string(data))
+
 	},
 }
 
