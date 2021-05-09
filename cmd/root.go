@@ -30,7 +30,7 @@ var cfgFile string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "gowin",
-	Short: "CLI Application for coWIN application",
+	Short: "v0.1 CLI Application for coWIN application",
 	Long: `gowin is a CLI library for coWIN that empowers easy search, find and book features. 
 gowin will monitor vaccine availability for you and will notify you as soon as it is available.`,
 	// Uncomment the following line if your bare application
