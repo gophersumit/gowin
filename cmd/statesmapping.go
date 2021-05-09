@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -41,8 +40,6 @@ type StateDistrictMaster map[int]*StateDistrict
 var masterData StateDistrictMaster
 
 func init() {
-	fmt.Println("Loading states and cities master data...")
-
 	acceptLanguage := "en-US,en;q=0.9"
 	params := CowinPublicV2.StatesParams{
 		AcceptLanguage: &acceptLanguage,
@@ -106,8 +103,5 @@ func init() {
 			wg.Done()
 		}(s.StateID)
 	}
-
 	wg.Wait()
-
-	fmt.Println("loaded...")
 }
