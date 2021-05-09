@@ -21,6 +21,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -39,6 +40,24 @@ var findCmd = &cobra.Command{
 		pincode, err := cmd.Flags().GetInt("pincode")
 		if err != nil {
 			log.Fatalf("Error reading pincode")
+		}
+		city, err := cmd.Flags().GetString("city")
+		if err != nil {
+			log.Fatalf("Error reading pincode")
+		}
+
+		cityId := 0
+		for _, s := range masterData {
+			for _, d := range s.Districts {
+				if strings.EqualFold(city, d.DistrictName) {
+					cityId = d.DistrictID
+					break
+				}
+			}
+		}
+
+		if cityId == 0 && city != "" {
+			log.Fatalln("Invalid City")
 		}
 
 		weeks := 12
@@ -60,20 +79,38 @@ var findCmd = &cobra.Command{
 		for _, date := range dates {
 			go func(d string) {
 
-				param := &CowinPublicV2.CalendarByPinParams{
-					Pincode:        strPin,
-					Date:           d,
-					AcceptLanguage: nil,
-				}
-				response, err := cowinClient.CalendarByPin(context.Background(), param, cowinClient.RequestEditors...)
+				if cityId > 0 {
+					param := &CowinPublicV2.CalendarByDistrictParams{
+						DistrictId:     strconv.Itoa(cityId),
+						Date:           d,
+						AcceptLanguage: nil,
+					}
 
-				if err != nil {
-					log.Fatalf("Error")
+					response, err := cowinClient.CalendarByDistrict(context.Background(), param, cowinClient.RequestEditors...)
+
+					if err != nil {
+						log.Fatalf("Error")
+					}
+					defer response.Body.Close()
+					centers := CowinCenters{}
+					json.NewDecoder(response.Body).Decode(&centers)
+					printCenters(centers)
+				} else {
+					param := &CowinPublicV2.CalendarByPinParams{
+						Pincode:        strPin,
+						Date:           d,
+						AcceptLanguage: nil,
+					}
+					response, err := cowinClient.CalendarByPin(context.Background(), param, cowinClient.RequestEditors...)
+
+					if err != nil {
+						log.Fatalf("Error")
+					}
+					defer response.Body.Close()
+					centers := CowinCenters{}
+					json.NewDecoder(response.Body).Decode(&centers)
+					printCenters(centers)
 				}
-				defer response.Body.Close()
-				centers := CowinCenters{}
-				json.NewDecoder(response.Body).Decode(&centers)
-				printCenters(centers)
 				wg.Done()
 
 			}(date)
@@ -85,8 +122,10 @@ var findCmd = &cobra.Command{
 
 func init() {
 	var pincode int
+
+	var city string
 	findCmd.Flags().IntVarP(&pincode, "pincode", "p", 0, "Pincode to search for")
-	findCmd.MarkFlagRequired("pincode")
+	findCmd.Flags().StringVarP(&city, "city", "c", "", "City to search for")
 
 	rootCmd.AddCommand(findCmd)
 

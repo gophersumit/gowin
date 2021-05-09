@@ -504,6 +504,7 @@ func NewDistrictsRequest(server string, stateId string, params *DistrictsParams)
 		req.Header.Set("Accept-Language", headerParam0)
 	}
 
+	req.Header.Add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36 Edg/90.0.818.56")
 	return req, nil
 }
 
@@ -541,6 +542,8 @@ func NewStatesRequest(server string, params *StatesParams) (*http.Request, error
 
 		req.Header.Set("Accept-Language", headerParam0)
 	}
+
+	req.Header.Add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36 Edg/90.0.818.56")
 
 	return req, nil
 }
@@ -607,6 +610,8 @@ func NewCalendarByDistrictRequest(server string, params *CalendarByDistrictParam
 
 		req.Header.Set("Accept-Language", headerParam0)
 	}
+
+	req.Header.Add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36 Edg/90.0.818.56")
 
 	return req, nil
 }
